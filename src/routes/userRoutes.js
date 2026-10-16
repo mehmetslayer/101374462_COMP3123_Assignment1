@@ -1,8 +1,12 @@
 const express = require('express');
-const router = express.Router();
 const { signup, login } = require('../controllers/userController');
+const { signupRules, loginRules } = require('../validators/userValidators');
+const validate = require('../middleware/validate');
+const { authLimiter } = require('../middleware/rateLimiter');
 
-router.post('/signup', signup);
-router.post('/login', login);
+const router = express.Router();
+
+router.post('/signup', authLimiter, signupRules, validate, signup);
+router.post('/login', authLimiter, loginRules, validate, login);
 
 module.exports = router;
