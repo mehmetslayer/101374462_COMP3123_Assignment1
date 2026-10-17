@@ -45,6 +45,7 @@ Users can sign up, log in, and manage their own employee records. Every employee
    npm install
    ```
 2. Copy `.env.example` to `.env` and fill in the values (see below).
+   MongoDB runs on MongoDB Atlas, so there is nothing to start locally. Create a free cluster, add your IP to the access list, and put its connection string in `MONGODB_URI`.
 3. Start the server:
    ```
    npm run dev      # development (nodemon)
@@ -153,6 +154,19 @@ Consequences:
 | 500 | Unexpected server error (logged, generic message returned) |
 
 403 is intentionally not used, see "Ownership Enforcement".
+
+## Health Check
+
+`GET /health` (no authentication) returns 200 with:
+
+```json
+{
+  "status": "ok",
+  "uptime": 2092.48,
+  "timestamp": "2026-10-16T20:09:48.862Z",
+  "database": "connected"
+}
+```
 
 ## Logging
 
