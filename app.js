@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+const connectDB = require('./src/config/db');
 const logger = require('./src/utils/logger');
 const userRoutes = require('./src/routes/userRoutes');
 const employeeRoutes = require('./src/routes/employeeRoutes');
@@ -10,6 +11,9 @@ const errorHandler = require('./src/middleware/errorHandler');
 
 const app = express();
 
+// behind Vercel's proxy, trust it so rate limiting sees the real client IP
+if (process.env.VERCEL) app.set('trust proxy', 1);
+
 app.use(helmet()); // secure HTTP headers
 app.use(express.json()); // parse json bodies into req.body
 
@@ -17,6 +21,16 @@ app.use(express.json()); // parse json bodies into req.body
 app.use(morgan(':method :url :status :response-time ms', {
   stream: { write: (msg) => logger.http(msg.trim()) },
 }));
+
+// serverless: connect on the first request (a no-op locally, server.js connects first)
+let dbReady;
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    dbReady = dbReady || connectDB().catch((err) => { dbReady = null; throw err; });
+    await dbReady;
+  }
+  next();
+});
 
 // health check; confirms the server and DB are up
 app.get('/health', (req, res) => {

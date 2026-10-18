@@ -2,8 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const winston = require('winston');
 
-const logDir = path.join(__dirname, '..', '..', 'logs');
-fs.mkdirSync(logDir, { recursive: true });
+const transports = [new winston.transports.Console()];
+
+// Vercel's filesystem is read-only, so file logging only runs locally
+if (!process.env.VERCEL) {
+  const logDir = path.join(__dirname, '..', '..', 'logs');
+  fs.mkdirSync(logDir, { recursive: true });
+  transports.push(new winston.transports.File({ filename: path.join(logDir, 'app.log') }));
+}
 
 const logger = winston.createLogger({
   level: 'http',
@@ -11,10 +17,7 @@ const logger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}] ${message}`)
   ),
-  transports: [
-    new winston.transports.File({ filename: path.join(logDir, 'app.log') }),
-    new winston.transports.Console(),
-  ],
+  transports,
 });
 
 module.exports = logger;
