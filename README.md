@@ -5,6 +5,15 @@ Users can sign up, log in, and manage their own employee records. Every employee
 
 **Student:** Mehmet Emin Onem (101374462)
 
+## Live API (Vercel)
+
+Base URL: https://101374462-comp-3123-assignment1.vercel.app
+
+- Health check: https://101374462-comp-3123-assignment1.vercel.app/health
+- All endpoints below work on this base URL, for example `POST https://101374462-comp-3123-assignment1.vercel.app/api/v1/user/login`.
+- The root URL (`/`) has no route by design and returns a JSON 404.
+- To use the Postman collection against the live API, change the collection variable `baseUrl` to the URL above.
+
 ## Tech Stack
 
 - Node.js, Express 5
@@ -168,6 +177,15 @@ Consequences:
 }
 ```
 
+## Deployment Notes (Vercel)
+
+The same code runs locally and on Vercel; the differences are switched on by the `VERCEL` environment variable that Vercel sets automatically:
+
+- **Database connection:** locally, `server.js` connects to MongoDB before listening. On Vercel there is no long-running server, so a small middleware in `app.js` connects on the first request and reuses the connection while the function stays warm.
+- **Logging:** Vercel's filesystem is read-only, so winston only writes to the console there (visible in Vercel's Runtime Logs). Locally it also writes to `logs/app.log`.
+- **Rate limiting:** `trust proxy` is enabled on Vercel so the limiter sees the real client IP. The limiter keeps its counters in memory, so on Vercel each function instance has its own counter and the limit is approximate. The 429 behavior is shown with the local server (`rate-limit-429.png`).
+- **Environment variables:** `MONGODB_URI` and `JWT_SECRET` are set in the Vercel project settings, never in the repository. MongoDB Atlas network access allows connections from Vercel.
+
 ## Logging
 
 winston writes to the console and to `logs/app.log`; morgan HTTP logs go through winston. Logged events include requests, validation failures, login success and failure (user id only), authentication failures, and rate limit hits. Passwords and tokens are never logged. `logs/` is git-ignored; `logs/sample.log` is a sample kept for review.
@@ -193,10 +211,11 @@ Notes for running the full collection:
 | Employee errors | `employee-invalid-id-400.png`, `employee-nonexistent-404.png` |
 | Validation | `validation-employee-date-400.png`, `validation-employee-email-400.png`, `validation-employee-missing-400.png`, `validation-employee-salary-400.png` |
 | Ownership (A and B cannot touch each other's data) | `ownership-A-reads-B-404.png`, `ownership-A-updates-B-404.png`, `ownership-A-deletes-B-404.png`, `ownership-B-reads-A-404.png`, `ownership-B-updates-A-404.png`, `ownership-B-deletes-A-404.png` |
-| Database | `mongodb-users-hashed-password.png`, `mongodb-employees-ownership.png` |
+| Database | `mongodb-database.png`, `mongodb-users-hashed-password.png`, `mongodb-employees-ownership.png` |
 | Security | `helmet-headers.png`, `rate-limit-429.png` |
 | Logs | `logs-app-log.png` |
 | Full run | `postman-runner-39-passed.png` |
+| Live API (Vercel) | `vercel-health-200.png`, `vercel-login-200.png`, `vercel-employees-200.png` |
 
 ## Test Accounts
 
